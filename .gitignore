@@ -3,4 +3,4 @@
 git_ignored/*
 contexts/*
 resources/*
-
+raw_resources/*
