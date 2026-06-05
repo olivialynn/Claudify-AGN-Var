@@ -1,0 +1,6 @@
+Cross-match the Gaia AGN catalog with Rubin DP2. Select ≥200 band-lightcurves
+(≥30 days, densest cadence). Remove flagged detections. Fit a damped random walk
+(DRW) model with EzTaoX to each lightcurve. Answer: which band is most variable
+on ~10-day scales? Which AGN is most variable per u/g/r/i/z/y band (bands with
+>10 lightcurves only)? Plot lightcurve + EzTaoX fit for each top AGN, and assess
+physical vs. instrumental variability.
