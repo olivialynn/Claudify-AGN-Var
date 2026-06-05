@@ -47,7 +47,7 @@ claude \
   --dangerously-skip-permissions \
   --tools <span class="hljs-string">"Write"</span> \
   --verbose \
-  -p <span class="hljs-string">"<span class="hljs-variable">$(cat science_task.txt)</span>"</span> | tee outputs/<span class="hljs-variable">${TRIAL}</span>_raw.txt 2&gt;&amp;1
+  -p <span class="hljs-string">"<span class="hljs-variable">$(cat science_task.txt)</span>"</span> 2>&1 | tee outputs/<span class="hljs-variable">${TRIAL}</span>_raw.txt 2&gt;&amp;1
 </code></pre>
 <p>Then <code>bash run_trial.sh T1</code>, <code>bash run_trial.sh T2</code>, etc. The <code>--max-budget-usd</code> guard is useful since lower-context trials may spin on useless tool calls.</p>
 <h2 id="the-flags-explained">The flags explained</h2>

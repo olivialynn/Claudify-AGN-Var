@@ -53,7 +53,7 @@ claude \
   --dangerously-skip-permissions \
   --tools "Write" \
   --verbose \
-  -p "$(cat science_task.txt)" | tee outputs/${TRIAL}_raw.txt 2>&1
+  -p "$(cat science_task.txt)" 2>&1 | tee outputs/${TRIAL}_raw.txt 2>&1
 ```
 Then `bash run_trial.sh T1`, `bash run_trial.sh T2`, etc. The `--max-budget-usd` guard is useful since lower-context trials may spin on useless tool calls.
 
