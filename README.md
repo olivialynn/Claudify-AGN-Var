@@ -53,7 +53,7 @@ Candidate context resources are catalogued across three dimensions:
 
 Two resources are always present and not ablated: a brief statement of the compute environment and the DP2 data paths on the cluster. Everything else is a candidate for ablation.
 
-→ **[Full resource inventory](resource_inventory.html)** — all 19 resources rated by expected helpfulness and context burden
+→ **[Full resource inventory](https://olivialynn.github.io/Claudify-AGN-Var/docs/resource_inventory.html)** — all 19 resources rated by expected helpfulness and context burden
 
 ### Trials
 
@@ -67,11 +67,11 @@ Trials are organized into three phases:
 
 A bonus trial attempts any and all of esteemed astrophysicist Neven Caplar's relevant code repositories, as well as his AGN Variability (with LSDB) notebook.
 
-→ **[Trial matrix](trial_matrix.html)** — all 10 trials with resource inclusion and execution priority
+→ **[Trial matrix](https://olivialynn.github.io/Claudify-AGN-Var/docs/trial_matrix.html)** — all 10 trials with resource inclusion and execution priority
 
-### Execution order
+### Execution
 
-Run Phase 1 first. The solo probe trials are cheap and may short-circuit later decisions — if the reference pipeline alone produces a good result, that's immediately informative about what Claude can do with a worked example versus reasoning from documentation.
+See the [Run Plan](https://olivialynn.github.io/Claudify-AGN-Var/docs/run_plan.md) for more information.
 
 ---
 
