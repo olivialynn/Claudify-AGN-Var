@@ -71,7 +71,7 @@ A bonus trial attempts any and all of esteemed astrophysicist Neven Caplar's rel
 
 ### Execution
 
-See the [Run Plan](https://olivialynn.github.io/Claudify-AGN-Var/docs/run_plan.md) for more information.
+See the [Run Plan](https://olivialynn.github.io/Claudify-AGN-Var/docs/run_plan.html) for more information.
 
 ---
 
