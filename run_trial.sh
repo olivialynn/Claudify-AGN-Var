@@ -6,4 +6,4 @@ claude \
   --dangerously-skip-permissions \
   --tools "Write" \
   --verbose \
-  -p "$(cat science_task.txt)" | tee outputs/T${TRIAL}_raw.txt 2>&1
+  -p "$(cat science_task.txt)" | tee outputs/T${TRIAL}_raw.md
