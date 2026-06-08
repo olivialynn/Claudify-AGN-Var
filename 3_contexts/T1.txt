@@ -1,3 +1,4 @@
+Trial: T1. Write the final notebook to 4_outputs/T1_notebook.ipynb.
 ## Compute Environment
 
 You are generating a Jupyter notebook that will be executed on the USDF RSP

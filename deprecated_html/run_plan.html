@@ -1,0 +1,77 @@
+<h1 id="the-run-plan">The Run Plan</h1>
+<h2 id="directory-setup">Directory setup</h2>
+<pre><code>experiment/
+  resources/            <span class="hljs-comment"># raw downloaded resources, one dir each</span>
+    lsdb_guide/
+    lsdb_rtd/
+    eztaox/
+    dp2_schema/
+    <span class="hljs-keyword">...</span>
+  contexts/             <span class="hljs-comment"># assembled per-trial — your IV, checked into git</span>
+    T0_baseline.txt     <span class="hljs-comment"># just the env/paths statement</span>
+    T1_lsdb_guide.txt   <span class="hljs-comment"># baseline + LSDB_GUIDE.md contents</span>
+    T2_hw2.txt          <span class="hljs-comment"># baseline + HW2 pipeline</span>
+    T3_full_tool.txt    <span class="hljs-comment"># baseline + all Tool resources concatenated</span>
+    <span class="hljs-keyword">...</span>
+  science_task.txt      <span class="hljs-comment"># the fixed prompt — never changes</span>
+  outputs/
+    T0_notebook.ipynb
+    T1_notebook.ipynb
+    <span class="hljs-keyword">...</span>
+  run_trial.sh
+</code></pre><h2 id="generating-the-context-files">Generating the context files</h2>
+<pre><code class="lang-bash"><span class="hljs-comment"># assemble.sh</span>
+cat resources/baseline.txt &gt; contexts/T0.txt
+
+cat resources/baseline.txt <span class="hljs-string">\</span>
+    resources/lsdb_guide.txt &gt; contexts/T1.txt
+
+cat resources/baseline.txt <span class="hljs-string">\</span>
+    resources/hw2.txt &gt; contexts/T2.txt
+
+cat resources/baseline.txt <span class="hljs-string">\</span>
+    resources/lsdb_guide.txt <span class="hljs-string">\</span>
+    resources/lsdb_rtd.txt <span class="hljs-string">\</span>
+    resources/eztaox.txt <span class="hljs-string">\</span>
+    resources/lsdb_nbs.txt &gt; contexts/T3.txt
+<span class="hljs-comment"># ...and so on</span>
+</code></pre>
+<h2 id="running-the-trials">Running the trials</h2>
+<p>Suggested in a run script such as:</p>
+<pre><code class="lang-bash"><span class="hljs-meta">#!/bin/bash</span>
+TRIAL=<span class="hljs-variable">$1</span>  <span class="hljs-comment"># e.g. 1</span>
+claude \
+  --bare \
+  --append-system-prompt-file ./contexts/T<span class="hljs-variable">${TRIAL}</span>.txt \
+  --no-session-persistence \
+  --dangerously-skip-permissions \
+  --tools <span class="hljs-string">"Write"</span> \
+  --verbose \
+  -p <span class="hljs-string">"<span class="hljs-variable">$(cat science_task.txt)</span>"</span> 2>&1 | tee outputs/<span class="hljs-variable">${TRIAL}</span>_raw.txt 2&gt;&amp;1
+</code></pre>
+<p>Then <code>bash run_trial.sh T1</code>, <code>bash run_trial.sh T2</code>, etc. The <code>--max-budget-usd</code> guard is useful since lower-context trials may spin on useless tool calls.</p>
+<h2 id="the-flags-explained">The flags explained</h2>
+<h3 id="why-bare-matters-here">Why <code>--bare</code> matters here</h3>
+<p><code>--bare</code> enables minimal mode: it skips auto-discovery of hooks, skills, plugins, MCP servers, auto memory, and CLAUDE.md. Without it, Claude will read any CLAUDE.md in the working directory or parent directories — which is uncontrolled context leakage that would invalidate your trial boundaries. With <code>--bare</code>, the only context above the task prompt is what you explicitly inject via the system prompt file. </p>
+<div class="alert alert-warning">
+<b>Actually:</b> Never mind about this flag - it was causing claude to give &quot;not logged in&quot; errors. Omitting, as we have no CLAUDE.md file in this repo.
+</div>
+
+<h3 id="why-not-add-dir-the-core-problem-with-the-directory-approach">Why not <code>--add-dir</code>: the core problem with the directory approach</h3>
+<p><code>--add-dir</code> grants Claude file access to those directories, but doesn&#39;t deterministically load them into context — Claude would have to choose to Read them. For an ablation experiment, you want to know precisely what&#39;s in context, not infer it from Claude&#39;s browsing behavior. That&#39;s a confound.</p>
+<h3 id="the-right-mechanism-append-system-prompt-file-">The right mechanism: <code>--append-system-prompt-file</code></h3>
+<p>Assemble one context file per trial. That file is your independent variable — it&#39;s exactly what gets injected, documented, and diffed between trials.</p>
+<h3 id="why-append-vs-system-prompt-">Why <code>--append</code> vs <code>--system-prompt</code></h3>
+<p>Use the append flag when Claude should remain a coding assistant that also follows your extra rules. Appending preserves the default tool guidance, safety instructions, and coding conventions, so you only supply what differs. Use a replacement flag when the surface, identity, or permission model differs from Claude Code&#39;s — replacing drops all of the default prompt, including tool guidance and safety instructions. </p>
+<p>For this task, keep the default tool guidance. You want Claude Code acting like a competent code-generating agent; you&#39;re only varying what domain/library knowledge it has. <code>--append-system-prompt-file</code> is the right call.</p>
+<h3 id="using-p-for-a-new-agent-per-trial-">Using <code>-p</code> for a &quot;new agent per trial&quot;</h3>
+<p>Each claude <code>-p</code> ... invocation is a completely fresh agent with no memory of prior runs. <code>--no-session-persistence</code> disables session persistence so sessions are not saved to disk and cannot be resumed. Combine that with <code>--bare</code> and you have genuine isolation. </p>
+<h3 id="on-tool-restriction">On tool restriction</h3>
+<p>For T0 (baseline) and other lower-context trials where Claude might try to compensate by exploring the filesystem, you can add <code>--tools &quot;Write&quot;</code> to restrict it to only writing files. That prevents it from probing the data directories and bootstrapping context it wasn&#39;t given. For the higher-context trials where you actually want it to produce a runnable notebook, you might relax this. Worth noting in your trial log either way.</p>
+<h2 id="questions-and-concerns-about-large-contexts-">Questions and concerns (about large contexts)</h2>
+<p><strong>Will it fit?</strong><br>Probably yes. Claude&#39;s context window is 200K tokens, and even a substantial RTD is unlikely to overflow that on its own. The ceiling trial with everything stacked might get uncomfortable, but it&#39;s not the binding constraint.</p>
+<p><strong>Will it hurt the experiment?</strong><br>Yes, if you dump full RTDs unmodified. This is the real concern. Your resource inventory already flagged it: the DP2 schema is explicitly marked &quot;Very large unfiltered — consider curated excerpt.&quot; The same logic applies to the RTDs. A very long, loosely relevant document buries the signal. The model will tend to underweight material in the middle of a long context, and you lose the ability to attribute trial performance to anything specific — you can&#39;t tell whether a trial improved because of section X or despite sections Y and Z. That&#39;s a confound in the IV itself.</p>
+<p>The LSDB_GUIDE.md is rated Critical partly because it&#39;s small and low-noise — it was specifically designed as a dense, targeted AI reference to solve exactly this problem. The RTDs weren&#39;t designed that way.</p>
+<p><strong>What to do instead:</strong><br>Curate excerpts rather than dumping full docs. For each RTD, figure out which functions and classes the reference pipeline actually calls, then extract just those API surfaces. For LSDB RTD, that&#39;s probably lsdb.catalog, lsdb.crossmatch, lsdb.Catalog.query_catalog, the relevant filtering methods, and the lazy evaluation / compute() patterns. For EzTaoX RTD, it&#39;s the DRW fitting interface and output parameters. You don&#39;t need the installation guide, the changelog, the contributor docs, or anything else.
+The practical way to scope this: open HW2, list every LSDB and EzTaoX function call in the notebook, then pull only the RTD pages that document those calls. That gives you a curated excerpt that&#39;s directly load-bearing for the task, small enough to be signal rather than noise, and honest about what you&#39;ve included.
+This also improves the experiment. If T3 (Full Tool) performs well with a curated LSDB RTD excerpt, you have a much cleaner story than if it performs well with 80 pages of docs where you&#39;re not sure what did the work.</p>
