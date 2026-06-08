@@ -1,5 +1,4 @@
 .DS_Store
 
-git_ignored/*
-resources/*
-raw_resources/*
+1_raw_resources/*
+2_resources/*
