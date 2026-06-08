@@ -1,18 +1,25 @@
 # assemble_contexts.sh
 
-
-# Phase 1: Solo probes
-
-# Trial 0: Baseline only
-cat resources/baseline.txt > contexts/T0.txt
-
-# Trial 1: Baseline + LSDB guide
-# cat resources/baseline.txt \
-#     resources/lsdb_guide.txt > contexts/T1.txt
-
-# # Trial 2: Baseline + HW2
-# cat resources/baseline.txt \
-#     resources/hw2.txt > contexts/T2.txt
+case "$1" in
+    "0")
+        echo "Assembling contexts for trial 0 (Baseline only)..."
+        cat 2_resources/baseline.txt > 3_contexts/T0.txt
+        ;;
+    "1")
+        echo "Assembling contexts for trial 1 (Baseline + LSDB guide)..."
+        cat 2_resources/baseline.txt \
+            2_resources/lsdb_guide.txt > 3_contexts/T1.txt
+        ;;
+    "2")
+        echo "Assembling contexts for trial 2 (Baseline + HW2)..."
+        cat 2_resources/baseline.txt \
+            2_resources/hw2.txt > 3_contexts/T2.txt
+        ;;
+    *)
+        echo "Usage: $0 [0|1|2]"
+        exit 1
+        ;;
+esac
 
 
 # Phase 2: Dimension isolation

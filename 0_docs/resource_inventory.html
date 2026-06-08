@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGN Pipeline — Context Ablation: Resource Inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #F8F8F6;
+  --surface:   #FFFFFF;
+  --border:    #E2E1DC;
+  --border-lt: #EDECE8;
+  --text-1:    #1A1917;
+  --text-2:    #67665F;
+  --text-3:    #A09F98;
+  --mono:      'DM Mono', 'Courier New', monospace;
+  --sans:      'DM Sans', system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 3rem 2.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1.5px solid var(--border);
+  padding-bottom: 1.25rem;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+h1 {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 300;
+  white-space: nowrap;
+}
+
+/* ── Legend ── */
+.legend {
+  display: flex;
+  gap: 2.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.legend-group { display: flex; flex-direction: column; gap: 6px; }
+
+.legend-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-3);
+}
+
+.legend-items {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* ── Badges ── */
+.badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--mono);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+
+.badge-T      { background: #EBF3FB; color: #174A73; }
+.badge-D      { background: #EAF5EF; color: #1A6638; }
+.badge-S      { background: #FEF8E7; color: #7A4210; }
+.badge-bl     { background: #F2F2EF; color: #5A5952; border: 1px solid #D8D7D1; }
+.badge-bonus  { background: #F7F0FD; color: #633080; border: 1px dashed #C9A6E8; }
+
+/* ── Helpfulness colours ── */
+.help-Critical { color: #B83232; font-weight: 500; }
+.help-High     { color: #1A6638; font-weight: 500; }
+.help-Med      { color: #174A73; }
+.help-Low      { color: var(--text-3); }
+.help-Unknown  { color: var(--text-3); font-style: italic; }
+.help-dash     { color: var(--text-3); }
+
+/* ── Size / Noise colours ── */
+.val-good { color: #1A6638; }
+.val-mid  { color: var(--text-2); }
+.val-bad  { color: #B83232; }
+
+/* ── Table ── */
+.table-wrap {
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+thead th {
+  background: #F3F2EE;
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-lt);
+  vertical-align: top;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #F9F9F7; }
+
+/* Section dividers */
+tr.section-hdr td {
+  background: #F3F2EE;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+}
+
+tr.baseline-row td         { background: #F7F7F5; }
+tr.baseline-row:hover td   { background: #F0F0EC; }
+tr.bonus-row               { opacity: 0.75; }
+
+/* Cell content */
+.rname {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-1);
+  line-height: 1.4;
+}
+
+.rdesc {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 3px;
+  line-height: 1.4;
+  font-weight: 300;
+}
+
+.rnotes {
+  font-size: 11px;
+  color: var(--text-3);
+  font-style: italic;
+  line-height: 1.5;
+  font-weight: 300;
+}
+
+.contrib {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-1);
+}
+
+/* ── Footer ── */
+footer {
+  margin-top: 1.75rem;
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 300;
+  border-top: 1px solid var(--border-lt);
+  padding-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AGN Variability Pipeline &mdash; Context Ablation: Resource Inventory</h1>
+  <span class="meta">19 resources &nbsp;&middot;&nbsp; sorted by helpfulness</span>
+</header>
+
+<div class="legend">
+  <div class="legend-group">
+    <div class="legend-label">Dimension</div>
+    <div class="legend-items">
+      <span class="legend-item"><span class="badge badge-T">T</span> Tool &mdash; library API, coding patterns</span>
+      <span class="legend-item"><span class="badge badge-D">D</span> Domain &mdash; data schema, environment, catalog structure</span>
+      <span class="legend-item"><span class="badge badge-S">S</span> Science &mdash; methodology, physical interpretation</span>
+    </div>
+  </div>
+  <div class="legend-group">
+    <div class="legend-label">Size / Noise</div>
+    <div class="legend-items">
+      <span class="legend-item"><span class="val-good">S / L</span> &nbsp;small / low &mdash; favorable</span>
+      <span class="legend-item"><span class="val-bad">L / H</span> &nbsp;large / high &mdash; costly</span>
+    </div>
+  </div>
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th style="width:20%">Resource</th>
+      <th style="width:10%">Dim</th>
+      <th style="width:7%">Help</th>
+      <th style="width:5%">Size</th>
+      <th style="width:5%">Noise</th>
+      <th style="width:24%">Key contribution</th>
+      <th style="width:29%">Notes / caveats</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <tr class="section-hdr"><td colspan="7">Critical</td></tr>
+
+    <tr>
+      <td><div class="rname">LSDB_GUIDE.md</div><div class="rdesc">AI-targeted canonical LSDB reference</div></td>
+      <td><span class="badge badge-T">T</span></td>
+      <td class="help-Critical">Critical</td>
+      <td class="val-good">S</td>
+      <td class="val-good">L</td>
+      <td class="contrib">Lazy eval patterns, performance anti-patterns, AI-specific guidance</td>
+      <td class="rnotes">Standalone trial candidate. Highest signal-per-token of any resource. Test before bundling with other LSDB docs.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">AGN HW 2</div><div class="rdesc">Pre-built pipeline matching exactly the target task</div></td>
+      <td><span class="badge badge-T">T</span> <span class="badge badge-D">D</span> <span class="badge badge-S">S</span></td>
+      <td class="help-Critical">Critical</td>
+      <td class="val-mid">M</td>
+      <td class="val-good">L</td>
+      <td class="contrib">Complete target pipeline &mdash; the ceiling condition</td>
+      <td class="rnotes">Test as a solo trial first. Effectively the answer key. Highest expected single-resource impact.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">DP2 schema (sdm-schemas)</div><div class="rdesc">sdm-schemas.lsst.io &mdash; full DP2 column definitions</div></td>
+      <td><span class="badge badge-D">D</span></td>
+      <td class="help-Critical">Critical</td>
+      <td class="val-bad">L</td>
+      <td class="val-bad">H</td>
+      <td class="contrib">Exact column names, flag definitions for quality cuts</td>
+      <td class="rnotes">Very large unfiltered. Consider curated excerpt of DiaObject / DiaSource only. Alternatively, encourage LSDB schema inspection tools.</td>
+    </tr>
+
+    <tr class="section-hdr"><td colspan="7">High</td></tr>
+
+    <tr>
+      <td><div class="rname">LSDB API docs (RTD)</div><div class="rdesc">ReadTheDocs API reference built from docs/</div></td>
+      <td><span class="badge badge-T">T</span></td>
+      <td class="help-High">High</td>
+      <td class="val-mid">M</td>
+      <td class="val-good">L</td>
+      <td class="contrib">Complete function signatures and class reference</td>
+      <td class="rnotes">Overlaps substantially with GUIDE.md. Test separately to determine if GUIDE.md alone suffices.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">LSDB AGN/Gaia notebooks</div><div class="rdesc">Science pipeline notebooks incl. Gaia catalog access</div></td>
+      <td><span class="badge badge-T">T</span> <span class="badge badge-D">D</span></td>
+      <td class="help-High">High</td>
+      <td class="val-mid">M</td>
+      <td class="val-good">L</td>
+      <td class="contrib">Gaia crossmatch pattern, AGN-specific LSDB usage</td>
+      <td class="rnotes">Covers the Gaia catalog access concern. More targeted than general notebooks. Partially overlaps RSP DP1 notebook.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">EzTaoX API docs (RTD)</div><div class="rdesc">ReadTheDocs reference covering API and methodology</div></td>
+      <td><span class="badge badge-T">T</span></td>
+      <td class="help-High">High</td>
+      <td class="val-mid">M</td>
+      <td class="val-good">L</td>
+      <td class="contrib">DRW fitting interface, output parameters, methodology motivation</td>
+      <td class="rnotes">Methodology coverage reportedly solid in RTD. May be sufficient without the paper. Test paper as marginal add-on.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">EzTaoX example notebooks</div><div class="rdesc">Example notebooks for DRW fitting workflows</div></td>
+      <td><span class="badge badge-T">T</span></td>
+      <td class="help-High">High</td>
+      <td class="val-good">S</td>
+      <td class="val-good">L</td>
+      <td class="contrib">Concrete DRW fitting code and direct call patterns</td>
+      <td class="rnotes">Most directly actionable EzTaoX content. Strong candidate for bundling with API docs as a single unit.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">RSP LSDB notebook (DP1)</div><div class="rdesc">102_5_LSDB_data_access.ipynb &mdash; lsst/tutorial-notebooks</div></td>
+      <td><span class="badge badge-D">D</span></td>
+      <td class="help-High">High</td>
+      <td class="val-mid">M</td>
+      <td class="val-mid">M</td>
+      <td class="contrib">Rubin data access via LSDB, catalog path structure</td>
+      <td class="rnotes">DP1 schema &mdash; flag column names and catalog paths may differ from DP2. Audit before including.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">AGN Variability DP1 (LSDB)</div><div class="rdesc">End-to-end AGN pipeline rewritten with LSDB</div></td>
+      <td><span class="badge badge-T">T</span> <span class="badge badge-S">S</span></td>
+      <td class="help-High">High</td>
+      <td class="val-mid">M</td>
+      <td class="val-good">L</td>
+      <td class="contrib">Correct library + full science structure, end-to-end</td>
+      <td class="rnotes">DP1 schema, but LSDB patterns and science structure are directly applicable. High value.</td>
+    </tr>
+
+    <tr class="section-hdr"><td colspan="7">Medium</td></tr>
+
+    <tr>
+      <td><div class="rname">LSDB general notebooks</div><div class="rdesc">General-purpose LSDB example notebooks (GitHub/RTD)</div></td>
+      <td><span class="badge badge-T">T</span></td>
+      <td class="help-Med">Med</td>
+      <td class="val-bad">L</td>
+      <td class="val-mid">M</td>
+      <td class="contrib">Coding patterns across a broad range of LSDB use cases</td>
+      <td class="rnotes">Needs curation &mdash; many notebooks irrelevant to this task. High noise if included wholesale.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">EzTaoX paper</div><div class="rdesc">Peer-reviewed methodology paper for EzTaoX / DRW</div></td>
+      <td><span class="badge badge-S">S</span></td>
+      <td class="help-Med">Med</td>
+      <td class="val-bad">L</td>
+      <td class="val-bad">H</td>
+      <td class="contrib">Deep DRW methodology, physical interpretation of &tau; and SF&infin;</td>
+      <td class="rnotes">Test against RTD-only to assess marginal value for science answer quality. Dense academic text.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">AGN Variability DP1 (non-LSDB)</div><div class="rdesc">End-to-end AGN notebook using older library stack</div></td>
+      <td><span class="badge badge-S">S</span></td>
+      <td class="help-Med">Med</td>
+      <td class="val-mid">M</td>
+      <td class="val-mid">M</td>
+      <td class="contrib">Science flow, analysis structure, plot layout</td>
+      <td class="rnotes">Uses a different library stack. Risk of contaminating LSDB patterns with non-LSDB approaches.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">Kelly et al. 2009</div><div class="rdesc">Foundational DRW paper for AGN variability modeling</div></td>
+      <td><span class="badge badge-S">S</span></td>
+      <td class="help-Med">Med</td>
+      <td class="val-bad">L</td>
+      <td class="val-bad">H</td>
+      <td class="contrib">DRW motivation, foundational &tau; and SF&infin; interpretation</td>
+      <td class="rnotes">Dense academic text. Worth testing only if science answer quality is insufficient with EzTaoX docs alone.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">MacLeod et al. 2010</div><div class="rdesc">AGN variability statistics and DRW validation</div></td>
+      <td><span class="badge badge-S">S</span></td>
+      <td class="help-Med">Med</td>
+      <td class="val-bad">L</td>
+      <td class="val-bad">H</td>
+      <td class="contrib">AGN variability statistics, DRW empirical validation</td>
+      <td class="rnotes">Partially redundant with Kelly 2009. Test together with Kelly, or not at all.</td>
+    </tr>
+
+    <tr class="section-hdr"><td colspan="7">Low</td></tr>
+
+    <tr>
+      <td><div class="rname">HATS IVOA note</div><div class="rdesc">IVOA technical note defining HATS catalog format</div></td>
+      <td><span class="badge badge-T">T</span></td>
+      <td class="help-Low">Low</td>
+      <td class="val-mid">M</td>
+      <td class="val-bad">H</td>
+      <td class="contrib">Format specification for LSDB&rsquo;s underlying catalog format</td>
+      <td class="rnotes">Mostly theoretical. Unlikely to improve pipeline code quality for this task.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">HATS GitHub package</div><div class="rdesc">hats Python package repo (LSDB dependency)</div></td>
+      <td><span class="badge badge-T">T</span></td>
+      <td class="help-Low">Low</td>
+      <td class="val-good">S</td>
+      <td class="val-good">L</td>
+      <td class="contrib">Confirms HATS as LSDB dependency; versioning info</td>
+      <td class="rnotes">Awareness context only. Rarely needed explicitly in pipeline code.</td>
+    </tr>
+
+    <tr>
+      <td><div class="rname">S3DF cluster docs</div><div class="rdesc">SLAC S3DF documentation (s3df.slac.stanford.edu)</div></td>
+      <td><span class="badge badge-D">D</span></td>
+      <td class="help-Low">Low</td>
+      <td class="val-mid">M</td>
+      <td class="val-bad">H</td>
+      <td class="contrib">Cluster environment, job submission specifics</td>
+      <td class="rnotes">Cluster env is already covered by the baseline statement. Only useful if the pipeline needs explicit cluster job management.</td>
+    </tr>
+
+    <tr class="section-hdr"><td colspan="7">Bonus trial (TBD)</td></tr>
+
+    <tr class="bonus-row">
+      <td><div class="rname">Caplar repos (TBD)</div><div class="rdesc">Selected Neven Caplar AGN variability repos</div></td>
+      <td><span class="badge badge-T">T</span> <span class="badge badge-S">S</span> <span class="badge badge-bonus">bonus</span></td>
+      <td class="help-Unknown">Unknown</td>
+      <td class="val-mid">?</td>
+      <td class="val-mid">?</td>
+      <td class="contrib">AGN variability code, possibly DRW-adjacent analysis</td>
+      <td class="rnotes">Identify specific relevant notebooks first. Bonus trial only.</td>
+    </tr>
+
+    <tr class="section-hdr"><td colspan="7">Always in context &mdash; not ablated</td></tr>
+
+    <tr class="baseline-row">
+      <td><div class="rname">USDF-RSP statement + data paths</div><div class="rdesc">Cluster name, S3DF, and /sdf/data/rubin/&hellip; paths</div></td>
+      <td><span class="badge badge-bl">baseline</span></td>
+      <td class="help-dash">&mdash;</td>
+      <td class="val-good">S</td>
+      <td class="val-good">L</td>
+      <td class="contrib">Tells Claude the compute environment and where the data lives</td>
+      <td class="rnotes">Not ablated. Present in every trial.</td>
+    </tr>
+
+  </tbody>
+</table>
+</div>
+
+<footer>
+  <span>AGN Variability Pipeline &mdash; Context Engineering Experiment</span>
+  <span>19 resources &nbsp;&middot;&nbsp; 17 ablation candidates &nbsp;&middot;&nbsp; 1 bonus &nbsp;&middot;&nbsp; 1 baseline</span>
+</footer>
+
+</body>
+</html>

@@ -8,9 +8,10 @@ This repo documents a controlled experiment: what context does an LLM need to ge
 
 Gordon Richards (Drexel University) built an AGN variability population demo notebook for the LSST-DA meeting at JHU, combining LINCC Frameworks tutorials into an end-to-end pipeline. The pipeline selects AGN lightcurves from Rubin LSST data, fits a damped random walk (DRW) variability model to each, and answers which sources and bands are most variable.
 
-Claude was then used to rewrite the notebook using [LSDB](https://lsdb.readthedocs.io) — a catalog partitioning library built on Dask that enables lazy, scalable cross-matching of large astronomical catalogs. The rewrite achieved a >3× runtime speedup. But it required significant back-and-forth to get there. The key failure: Claude loaded lightcurve data before the catalog crossmatch, an expensive anti-pattern that LSDB is specifically designed to avoid. Only after being explicitly corrected did it produce a performant pipeline.
+Neven Caplar then used Claude to rewrite the notebook using [LSDB](https://lsdb.readthedocs.io) — a catalog partitioning library built on Dask that enables lazy, scalable cross-matching of large astronomical catalogs. The rewrite achieved a >3× runtime speedup. But it required significant back-and-forth to get there. The key failure: Claude loaded lightcurve data before the catalog crossmatch, an expensive anti-pattern that LSDB is specifically designed to avoid. Only after being explicitly corrected did it produce a performant pipeline.
 
-The goal of this experiment is to understand what context would have prevented that failure in the first place — and more broadly, to map the relationship between context configuration and output quality across the full pipeline task.
+The goal of this experiment is to map the relationship between context configuration and output quality across the full pipeline task. What is the minimum viable context 
+needed to create an arbitrary LSDB pipeline?
 
 ---
 

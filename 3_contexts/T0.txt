@@ -1,0 +1,26 @@
+## Compute Environment
+
+You are generating a Jupyter notebook that will be executed on the USDF RSP
+(Rubin Science Platform) at the SLAC S3DF cluster. The notebook is being
+generated outside this environment — do not attempt to execute code or access
+data paths during generation.
+
+## Available Data Catalogs
+
+All catalogs are in HATS format and should be loaded with lsdb.open_catalog().
+
+Rubin DP2 — difference imaging:
+  /sdf/data/rubin/shared/lsdb_commissioning/hats/v30_0_6/dia_object_collection
+
+Rubin DP2 — objects:
+  /sdf/data/rubin/shared/lsdb_commissioning/hats/v30_0_6/object_collection
+
+Gaia Bailer-Jones eDR3 distances:
+  https://data.lsdb.io/hats/gaia_edr3_distances
+
+## Python Environment
+
+Python 3.12. Available packages: lsdb, hats, nested-pandas, eztaox, numpy,
+pandas, dask, matplotlib, and standard scientific/astronomy packages.
+
+Do not use the Rubin Butler. Access all data directly via LSDB.
